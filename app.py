@@ -19,6 +19,14 @@ from sklearn.svm import SVC
 #from xgboost import XGBClassifier
 #from lightgbm import LGBMClassifier
 from sklearn.model_selection import KFold,cross_val_score
+#librerias de redes neuronales
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation, Flatten
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.utils import to_categorical
+import tensorflow as tf
+
 from sklearn.metrics import roc_curve, auc, roc_auc_score
 from sklearn.metrics import accuracy_score, confusion_matrix, fbeta_score, classification_report
 
@@ -227,7 +235,7 @@ def feature_engineering(dataset):
     del dataset["risk"]
     del dataset["Risk_good"]
     return dataset    
-
+    
 def modelling(dataset):
     #aplicamos una funcion logaritmo para ajustar los valores
     dataset['credit amount'] = np.log(dataset['credit amount'])
@@ -276,6 +284,94 @@ def modelling(dataset):
     st.plotly_chart(fig)
     return X_train, X_test, y_train, y_test
 
+#definimos el modelo
+def nn_model(learning_rate, y_train_categorical):
+    NN_model = Sequential()
+
+    # The Input Layer :
+    NN_model.add(Dense(128, kernel_initializer='normal',input_dim = X_train.shape[1], activation='relu'))
+
+    # The Hidden Layers :
+    NN_model.add(Dense(256, kernel_initializer='normal',activation='relu'))
+    NN_model.add(Dense(256, kernel_initializer='normal',activation='relu'))
+    NN_model.add(Dense(256, kernel_initializer='normal',activation='relu'))
+
+    # The Output Layer :
+    NN_model.add(Dense(np.unique(y_train_categorical).shape[0] , kernel_initializer='normal',activation='sigmoid'))
+
+    # Compile the network :
+    optimizer = Adam(learning_rate=1e-5)
+    NN_model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['acc'])
+    NN_model.summary()
+    return NN_model
+
+def TrainningNN(X_train, X_test, y_train, y_test):
+    y_test_categorical = to_categorical(y_test, num_classes=2, dtype='float32')
+    y_train_categorical = to_categorical( y_train, num_classes=2, dtype='float32')
+
+    #convertir tensor a numpy
+    #X_train = np.array(X_train)
+    X_train = np.asarray(X_train).astype(np.float32)
+    
+    #semilla para aleatorios
+    np.random.seed(7)
+
+    NN_model = nn_model(1e-4, y_train_categorical)
+    nb_epochs = 100
+    NN_model.fit(X_train, y_train_categorical, epochs=nb_epochs, batch_size=50)
+
+    #convertir tensor en numpy array
+    #X_test = np.array(X_test)
+    X_test = np.asarray(X_test).astype(np.float32)
+
+    NNpredictions = NN_model.predict(X_test)
+    
+
+    NN_prediction = list()
+    for i in range(len(NNpredictions)):
+        NN_prediction.append(np.argmax(NNpredictions[i]))
+
+    # Validation of the results
+    st.write("Accuracy:")
+    st.write(accuracy_score(y_test, NN_prediction))
+    
+    st.write("Confusion Matrix:")
+    st.write(confusion_matrix(y_test, NN_prediction))
+    cm = confusion_matrix(y_test, NN_prediction)
+    heatmap = go.Heatmap(z=cm,
+                     x=['Good', 'Bad'],
+                     y=['Good', 'Bad'],
+                     colorscale='Viridis')
+    # Crear un objeto figura
+    fig = go.Figure(data=[heatmap])
+    # Utilizar st.plotly_chart para mostrar la figura en Streamlit
+    st.plotly_chart(fig)
+
+    #st.write("fbeta score:")
+    #st.write(fbeta_score(y_test, NN_prediction, beta=2))
+    #st.write("Classification Report:")
+    #st.write(classification_report(y_test, NN_prediction))
+    
+    # Generate ROC curve values: fpr, tpr, thresholds
+    fpr, tpr, thresholds = roc_curve(y_test, NNpredictions[:, 1])
+    lr_auc = roc_auc_score(y_test, NNpredictions[:, 1])
+    # Plot ROC curve
+    fig = go.Figure()
+    # Curva de habilidad nula
+    fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', line=dict(dash='dash'), name='No Skill: ROC AUC=%.3f' % (0.5)))
+    # Curva ROC del modelo
+    fig.add_trace(go.Scatter(x=fpr, y=tpr, mode='lines', name='Logistic: ROC AUC=%.3f' % (lr_auc)))
+    # Configura el diseño del gráfico
+    fig.update_layout(xaxis_title='False Positive Rate',
+                  yaxis_title='True Positive Rate',
+                  title='ROC Curve',
+                  showlegend=True)
+    # Muestra la figura en Streamlit
+    st.plotly_chart(fig)
+    
+    return NN_model
+
+
 
 #writing simple text 
 
@@ -303,7 +399,7 @@ if "Cargar Datos" in selected_page:
         dataset = pd.read_csv(uploaded_file)
     # Mostrar datos en una tabla
         st.write(dataset)
-
+        
 if "Explorar Datos" in selected_page:
     st.write("""
     ## Explore Data
@@ -318,23 +414,24 @@ if "Feature Engineering" in selected_page:
     if uploaded_file is not None:
         dataset = feature_engineering(dataset)
         st.write(dataset)
-        
+
 if "Modelado" in selected_page:
     st.write("""
     ## Entrenamiento con diferentes modelos
     Resultados""")
     if uploaded_file is not None:
         X_train, X_test, y_train, y_test = modelling(dataset)
-
         
 if "Neural Network" in selected_page:
     st.write("""
     ## Neural Network
     Resultados""")
-
+    if uploaded_file is not None:
+        st.write(tf.__version__)
+        modelNN = TrainningNN(X_train, X_test, y_train, y_test)
         
 if "Prediccion" in selected_page:
     st.write("""
     ## Predicción de un Crédito
     Capture los datos""")
- 
+
