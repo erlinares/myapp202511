@@ -429,3 +429,21 @@ if "Modelado" in selected_page:
         # ------------------------------------------------
 
 
+if "Neural Network" in selected_page:
+    st.write("""
+    ## Neural Network
+    Resultados""")
+    if uploaded_file is not None:
+        if 'X_train' in st.session_state:
+            st.write(tf.__version__)
+            
+            # --- Retrieve the data from session_state ---
+            X_train = st.session_state['X_train']
+            X_test = st.session_state['X_test']
+            y_train = st.session_state['y_train']
+            y_test = st.session_state['y_test']
+            # --------------------------------------------
+            
+            modelNN = TrainningNN(X_train, X_test, y_train, y_test)
+        else:
+            st.warning("⚠️ Please run the **Modelado** step first to prepare the training data.")
