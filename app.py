@@ -285,7 +285,7 @@ def modelling(dataset):
     return X_train, X_test, y_train, y_test
 
 #definimos el modelo
-def nn_model(learning_rate, y_train_categorical):
+def nn_model(learning_rate):
     NN_model = Sequential()
 
     # The Input Layer :
