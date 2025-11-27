@@ -300,7 +300,7 @@ def nn_model(learning_rate, y_train_categorical):
     NN_model.add(Dense(np.unique(y_train_categorical).shape[0] , kernel_initializer='normal',activation='sigmoid'))
 
     # Compile the network :
-    optimizer = Adam(learning_rate=1e-5)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
     NN_model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['acc'])
     NN_model.summary()
     return NN_model
