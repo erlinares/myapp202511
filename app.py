@@ -421,16 +421,11 @@ if "Modelado" in selected_page:
     if uploaded_file is not None:
         X_train, X_test, y_train, y_test = modelling(dataset)
         
-if "Neural Network" in selected_page:
-    st.write("""
-    ## Neural Network
-    Resultados""")
-    if uploaded_file is not None:
-        st.write(tf.__version__)
-        modelNN = TrainningNN(X_train, X_test, y_train, y_test)
-        
-if "Prediccion" in selected_page:
-    st.write("""
-    ## Predicción de un Crédito
-    Capture los datos""")
+        # --- Add this section to store the data splits ---
+        st.session_state['X_train'] = X_train
+        st.session_state['X_test'] = X_test
+        st.session_state['y_train'] = y_train
+        st.session_state['y_test'] = y_test
+        # ------------------------------------------------
+
 
