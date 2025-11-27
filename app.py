@@ -297,11 +297,11 @@ def nn_model(learning_rate, y_train_categorical, X_train):
     NN_model.add(Dense(256, kernel_initializer='normal',activation='relu'))
 
     # The Output Layer :
-    NN_model.add(Dense(np.unique(y_train_categorical).shape[0] , kernel_initializer='normal',activation='sigmoid'))
+    NN_model.add(Dense(np.unique(y_train_categorical).shape[0] , kernel_initializer='normal',activation='softmax'))
 
     # Compile the network :
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
-    NN_model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['acc'])
+    NN_model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['acc'])
     NN_model.summary()
     return NN_model
 
