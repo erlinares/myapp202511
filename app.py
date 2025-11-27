@@ -537,9 +537,6 @@ if "Neural Network" in selected_page:
 if "Prediccion" in selected_page:
     if 'NN_model' in st.session_state and st.session_state['NN_model'] is not None:
         st.header("Prediccion (Usando el Modelo NN)")
-
         predictionForm(modelNN)
-
     else:
         st.warning("⚠️ Por favor, entrene la Red Neuronal en la sección 'Neural Network' primero.")
-
